@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const { Router } = express;
-const fs = require('fs');
+import fs from 'fs';
 const { Server: IOServer } = require('socket.io');
 const { Server: HttpServer } = require('http');
 
@@ -8,37 +8,32 @@ const app = express();
 const httpServer = new HttpServer(app);
 const io = new IOServer(httpServer);
 
-const productRouter = new Router();
+const productRouter = Router();
+const cartRouter = Router();
 
-const Products = require('./api/products.js');
-const productContainer = new Products('./api/products.json');
+import Products from './api/products';
+import Cart from './api/cart';
+const productContainer = new Products('../src/api/products.json');
+const cartContainer = new Cart('../src/api/carts.json');
+
+let admin : boolean = true;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 productRouter.use(express.json());
 productRouter.use(express.urlencoded({ extended: false }));
+cartRouter.use(express.json());
+cartRouter.use(express.urlencoded({ extended: false }));
 
-// Pug settings for templating
-app.set('view engine', 'pug');
-app.set('views', './views');
-app.use(express.static('public'));
-
-// index.html is sent when performing a get on the root directory
-app.get('/', async (req, res) => {
-    let allProducts = []
-    try {
-        allProducts = await productContainer.getAll();
-    } catch (err) {
-        res.render('pages/index.pug', {error: err});
-    }
-    res.render('pages/index.pug');
-})
+// PRODUCTS
 
 app.post('/', async (req, res) => {
     try {
         if( req.body.title == undefined || req.body.price === null || req.body.thumbnail == undefined || req.body.category == undefined || req.body.stock == null || req.body.title == '' || req.body.price === '' || req.body.thumbnail == '' || req.body.category == '' || req.body.stock == '' ) {
             throw 'Missing data. Product needs Title, Price, Thumbnail, Category and Stock.'
         }
+        if( !admin ) throw 'Admin authentication needed';
+        let timestamp = String(new Date()).slice(0,33);
         let category = req.body.category;
         let subcategory = req.body.subcategory;
         let title = req.body.title;
@@ -48,7 +43,7 @@ app.post('/', async (req, res) => {
         let thumbnail = req.body.thumbnail;
         price = parseFloat(price);
         stock = parseFloat(stock);
-        const newProduct = {category:category, subcategory:subcategory, title:title, description:description, price:price, stock:stock, thumbnail:thumbnail};
+        const newProduct = { timestamp:timestamp, category:category, subcategory:subcategory, title:title, description:description, price:price, stock:stock, thumbnail:thumbnail};
         const savedProduct = await productContainer.save(newProduct);
         res.send(JSON.stringify(savedProduct));
     } catch (err) {
@@ -65,7 +60,9 @@ app.post('/edit', async (req, res) => {
         else{
             throw 'No ID was provided';
         }
+        if( !admin ) throw 'Admin authentication needed';
         const prevProduct = await productContainer.getById(putId);
+        let newTimestamp = String(new Date()).slice(0,33);
         let newCategory = prevProduct.category;
         let newSubcategory = prevProduct.subcategory;
         let newTitle = prevProduct.title;
@@ -94,7 +91,7 @@ app.post('/edit', async (req, res) => {
         if (typeof req.body.thumbnail === 'string' && req.body.thumbnail !== '') {   
             newThumbnail = req.body.thumbnail;
         }
-        const newProduct = {category:newCategory, subcategory:newSubcategory, title:newTitle, description:newDescription, price:newPrice, stock:newStock, thumbnail:newThumbnail};
+        const newProduct = { timestamp:newTimestamp, category:newCategory, subcategory:newSubcategory, title:newTitle, description:newDescription, price:newPrice, stock:newStock, thumbnail:newThumbnail};
         const editProduct = await productContainer.edit(putId, newProduct).catch((err) => {
             throw err
         });
@@ -103,16 +100,6 @@ app.post('/edit', async (req, res) => {
         res.status(400).send(err.message || err);
     }
 });
-
-app.get('/products', async (req, res) => {
-    let allProducts = []
-    try {
-        allProducts = await productContainer.getAll();
-    } catch (err) {
-        res.render('pages/productView.pug', {error: err});
-    }
-    res.render('pages/productView.pug', {productList: allProducts});
-})
 
 // get all products from /api/products
 productRouter.get('/', async (req, res) => {
@@ -141,6 +128,8 @@ productRouter.post('/', async (req, res) => {
         if( req.body.title == undefined || req.body.price === null || req.body.thumbnail == undefined || req.body.category == undefined || req.body.stock == null || req.body.title == '' || req.body.price === '' || req.body.thumbnail == '' || req.body.category == '' || req.body.stock == '' ) {
             throw 'Missing data. Product needs Title, Price, Thumbnail, Category and Stock.'
         }
+        if( !admin ) throw 'Admin authentication needed';
+        let timestamp = String(new Date()).slice(0,33);
         let category = req.body.category;
         let subcategory = req.body.subcategory || ' ';
         let title = req.body.title;
@@ -150,7 +139,7 @@ productRouter.post('/', async (req, res) => {
         let thumbnail = req.body.thumbnail;
         price = parseFloat(price);
         stock = parseFloat(stock);
-        const newProduct = {category:category, subcategory:subcategory, title:title, description:description, price:price, stock:stock, thumbnail:thumbnail};
+        const newProduct = { timestamp:timestamp, category:category, subcategory:subcategory, title:title, description:description, price:price, stock:stock, thumbnail:thumbnail};
         const savedProduct = await productContainer.save(newProduct);
         res.send(`Producto añadido: ${JSON.stringify(savedProduct)}`);
     } catch (err) {
@@ -161,8 +150,10 @@ productRouter.post('/', async (req, res) => {
 // PUT method to edit a product by ID (this is the one that can be tested with postman)
 productRouter.put('/:id', async (req, res) => {
     try {
+        if( !admin ) throw 'Admin authentication needed';
         const param = req.params.id;
-        const prevProduct = productContainer.getById(param);
+        const prevProduct = await productContainer.getById(param);
+        let newTimestamp = String(new Date()).slice(0,33);
         let newCategory = prevProduct.category;
         let newSubcategory = prevProduct.subcategory || '';
         let newTitle = prevProduct.title;
@@ -191,7 +182,7 @@ productRouter.put('/:id', async (req, res) => {
         if (typeof req.body.thumbnail === 'string' && req.body.thumbnail !== '') {   
             newThumbnail = req.body.thumbnail;
         }
-        const newProduct = {category:newCategory, subcategory:newSubcategory, title:newTitle, description:newDescription, price:newPrice, stock:newStock, thumbnail:newThumbnail};
+        const newProduct = { timestamp:newTimestamp, category:newCategory, subcategory:newSubcategory, title:newTitle, description:newDescription, price:newPrice, stock:newStock, thumbnail:newThumbnail};
         await productContainer.edit(param, newProduct);
         res.json({id:param, ...newProduct});
     } catch (err) {
@@ -202,6 +193,7 @@ productRouter.put('/:id', async (req, res) => {
 // Delete a product by ID
 productRouter.delete('/:id', async (req, res) => {
     try {
+        if( !admin ) throw 'Admin authentication needed';
         const param = req.params.id;
         await productContainer.deleteById(param);
         res.send(`producto con id: ${param} eliminado exitosamente`);
@@ -210,8 +202,83 @@ productRouter.delete('/:id', async (req, res) => {
     }
 });
 
+// CARTS
+
+cartRouter.get('/', async (req,res) => {
+    try {
+        const allCarts = await cartContainer.getAll();
+        res.json(allCarts);
+    } catch (err) {
+        res.send(`${err}`);
+    }  
+})
+
+// get one cart by id from /api/cart/:id/products
+cartRouter.get('/:id/products', async (req, res) => {
+    try {
+        const param = req.params.id;
+        const cart = await cartContainer.getById(param);
+        res.json(cart);
+    } catch (err) {
+        res.send(`${err}`);
+    }
+});
+
+// create cart with a post method to /api/cart
+cartRouter.post('/', async (req, res) => {
+    try {
+        let timestamp = String(new Date()).slice(0,33);
+        const newCart = {timestamp , ...req.body};
+        const savedCart = await cartContainer.save(newCart);
+        res.json(savedCart);
+    } catch (err) {
+        res.send(`${err}`);
+    }
+});
+
+// Delete a cart by ID
+cartRouter.delete('/:id', async (req, res) => {
+    try {
+        const param = req.params.id;
+        await cartContainer.deleteById(param);
+        res.send(`carrito con id: ${param} eliminado exitosamente`);
+    } catch (err) {
+        res.send(`${err}`);
+    }
+});
+
+// Add product to cart
+cartRouter.post('/:id/products', async (req, res) => {
+    try {
+        const param = req.params.id;
+        let cart = await cartContainer.getById(param);
+        cart.products.push(req.body);
+        let editedCart = await cartContainer.edit(cart);
+        res.json(editedCart);
+    } catch (err) {
+        res.send(`${err}`);
+    }
+});
+
+// Remove product from cart
+cartRouter.delete('/:id/products/:prod_id', async (req, res) => {
+    try {
+        const cartId = req.params.id;
+        const prodId = req.params.prod_id;
+        let cart = await cartContainer.getById(cartId);
+        let removeIndex = cart.products.map(product => product.id).indexOf(prodId);
+        if ( removeIndex < 0) throw 'Product not found in cart'
+        ~removeIndex && cart.products.splice(removeIndex, 1);
+        let editedCart = await cartContainer.edit(cart);
+        res.json(editedCart);
+    } catch (err) {
+        res.send(`${err}`);
+    }
+});
+
 //Router
 app.use('/api/products', productRouter);
+app.use('/api/cart', cartRouter);
 
 //Connection
 const PORT = 8080;
