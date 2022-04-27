@@ -35,14 +35,15 @@ app.post('/', async (req, res) => {
         if( !admin ) throw 'Admin authentication needed';
         let timestamp = String(new Date()).slice(0,33);
         let category = req.body.category;
-        let subcategory = req.body.subcategory;
+        let subcategory = req.body.subcategory || ' ';
         let title = req.body.title;
-        let description = req.body.description;
+        let description = req.body.description || ' ';
         let price = req.body.price;
         let stock = req.body.stock;
         let thumbnail = req.body.thumbnail;
         price = parseFloat(price);
-        stock = parseFloat(stock);
+        stock = parseInt(stock);
+        if(price<=0 || stock<0) throw 'Error: Price and stock must be positive numbers'
         const newProduct = { timestamp:timestamp, category:category, subcategory:subcategory, title:title, description:description, price:price, stock:stock, thumbnail:thumbnail};
         const savedProduct = await productContainer.save(newProduct);
         res.send(JSON.stringify(savedProduct));
@@ -86,11 +87,12 @@ app.post('/edit', async (req, res) => {
             newPrice = parseFloat(req.body.price);
         }
         if (!isNaN(req.body.stock) && req.body.stock && req.body.stock !== '') {
-            newStock = parseFloat(req.body.stock);
+            newStock = parseInt(req.body.stock);
         }      
         if (typeof req.body.thumbnail === 'string' && req.body.thumbnail !== '') {   
             newThumbnail = req.body.thumbnail;
         }
+        if(newPrice<=0 || newStock<0) throw 'Error: Price and stock must be positive numbers'
         const newProduct = { timestamp:newTimestamp, category:newCategory, subcategory:newSubcategory, title:newTitle, description:newDescription, price:newPrice, stock:newStock, thumbnail:newThumbnail};
         const editProduct = await productContainer.edit(putId, newProduct).catch((err) => {
             throw err
@@ -138,7 +140,8 @@ productRouter.post('/', async (req, res) => {
         let stock = req.body.stock;
         let thumbnail = req.body.thumbnail;
         price = parseFloat(price);
-        stock = parseFloat(stock);
+        stock = parseInt(stock);
+        if(price<=0 || stock<0) throw 'Error: Price and stock must be positive numbers'
         const newProduct = { timestamp:timestamp, category:category, subcategory:subcategory, title:title, description:description, price:price, stock:stock, thumbnail:thumbnail};
         const savedProduct = await productContainer.save(newProduct);
         res.send(`Producto añadido: ${JSON.stringify(savedProduct)}`);
@@ -177,11 +180,12 @@ productRouter.put('/:id', async (req, res) => {
             newPrice = parseFloat(req.body.price);
         }
         if (parseFloat(req.body.stock) != null && req.body.stock !== '') {
-            newStock = parseFloat(req.body.stock);
+            newStock = parseInt(req.body.stock);
         }      
         if (typeof req.body.thumbnail === 'string' && req.body.thumbnail !== '') {   
             newThumbnail = req.body.thumbnail;
         }
+        if(newPrice<=0 || newStock<0) throw 'Error: Price and stock must be positive numbers'
         const newProduct = { timestamp:newTimestamp, category:newCategory, subcategory:newSubcategory, title:newTitle, description:newDescription, price:newPrice, stock:newStock, thumbnail:newThumbnail};
         await productContainer.edit(param, newProduct);
         res.json({id:param, ...newProduct});
@@ -251,11 +255,13 @@ cartRouter.delete('/:id', async (req, res) => {
 });
 
 // Add product to cart
-cartRouter.post('/:id/products', async (req, res) => {
+cartRouter.post('/:id/products/:prod_id', async (req, res) => {
     try {
-        const param = req.params.id;
-        let cart = await cartContainer.getById(param);
-        cart.products.push(req.body);
+        const cartID = req.params.id;
+        const prodID = req.params.prod_id;
+        let cart = await cartContainer.getById(cartID);
+        let product = await productContainer.getById(prodID);
+        cart.products.push(product);
         let editedCart = await cartContainer.edit(cart);
         res.json(editedCart);
     } catch (err) {
