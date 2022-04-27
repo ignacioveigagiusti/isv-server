@@ -16,7 +16,7 @@ class Cart {
             }
             const prevContent = JSON.parse(getContent); 
             // Extract IDs into an array
-            let indexArray: { id: number }[] = [];
+            let indexArray: number[] = [];
             for (const i in prevContent) {
                 indexArray.push(prevContent[i].id);
             }
@@ -26,7 +26,7 @@ class Cart {
             if (indexArray.length > 0) {
                 indexArray = indexArray.sort((a: any,b: any) => a - b )
                 for (let i = 0; i < indexArray.length; i++) {
-                    if ((indexArray[i].id - i) != 1){
+                    if ((indexArray[i] - i) != 1){
                         newID = i+1;
                         break
                     }

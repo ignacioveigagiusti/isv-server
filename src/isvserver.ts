@@ -13,8 +13,8 @@ const cartRouter = Router();
 
 import Products from './api/products';
 import Cart from './api/cart';
-const productContainer = new Products('../src/api/products.json');
-const cartContainer = new Cart('../src/api/carts.json');
+const productContainer = new Products('./api/products.json');
+const cartContainer = new Cart('./api/carts.json');
 
 let admin : boolean = true;
 
@@ -228,6 +228,9 @@ cartRouter.get('/:id/products', async (req, res) => {
 cartRouter.post('/', async (req, res) => {
     try {
         let timestamp = String(new Date()).slice(0,33);
+        if (!req.body.products) {
+            req.body.products = [];
+        }
         const newCart = {timestamp , ...req.body};
         const savedCart = await cartContainer.save(newCart);
         res.json(savedCart);
