@@ -235,7 +235,7 @@ cartRouter.post('/', async (req, res) => {
         if (!req.body.products) {
             req.body.products = [];
         }
-        const newCart = {timestamp , ...req.body};
+        const newCart = {timestamp: timestamp , products: req.body.products};
         const savedCart = await cartContainer.save(newCart);
         res.json(savedCart);
     } catch (err) {
@@ -290,7 +290,7 @@ app.use('/api/products', productRouter);
 app.use('/api/cart', cartRouter);
 
 //Connection
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 httpServer.listen(PORT, () => {
     console.log(`Servidor inicializado en el puerto ${httpServer.address().port}`)
 });
