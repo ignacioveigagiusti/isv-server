@@ -45,7 +45,7 @@ class Cart {
         }
     }
 
-    async edit(cart) {
+    async editCart(cart) {
         try{
             let getContent = await fs.promises.readFile(`${this.fileToWork}`, 'utf8');
             if (getContent == '') {
@@ -68,6 +68,32 @@ class Cart {
         }
         catch(err){
             throw new Error(`${err}`);
+        }
+    }
+
+    async editProduct(productId, product) {
+        try{
+            let getContent = await fs.promises.readFile(`${this.fileToWork}`, 'utf8');
+            if (getContent == '') {
+                getContent = '[]';
+            }
+            let prevContent = JSON.parse(getContent);
+            // Variable to check if the ID exists in the list
+            let IDwasFound = 0;
+            for (const i in prevContent) {
+                if (prevContent[i].id == productId) {
+                    IDwasFound = 1;
+                    prevContent[i] = { id: parseInt(productId), ...product};
+                }
+            }
+            // Throw error if ID was not found
+            if (IDwasFound == 0) throw 'ID was not found';
+            await fs.promises.writeFile(`${this.fileToWork}`, JSON.stringify(prevContent,null,2));
+            console.log('Escritura exitosa!');
+            return { id: parseInt(productId), ...product}
+        }
+        catch(err){
+            throw new Error(`${err}`)
         }
     }
 
@@ -136,9 +162,7 @@ class Cart {
         } catch (err) {
             throw new Error(`${err}`) 
         }
-    }
-
-    
+    }    
 }
 
 export default Cart;

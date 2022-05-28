@@ -11,8 +11,8 @@ const io = new IOServer(httpServer);
 const productRouter = Router();
 const cartRouter = Router();
 
-import Products from './api/products';
-import Cart from './api/cart';
+import Products from './api/containers/products';
+import Cart from './api/containers/cart';
 const productContainer = new Products('./api/products.json');
 const cartContainer = new Cart('./api/carts.json');
 
