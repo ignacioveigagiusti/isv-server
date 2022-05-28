@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-class Cart {
+class FileContainer {
     
     fileToWork: string;
 
@@ -165,4 +165,4 @@ class Cart {
     }    
 }
 
-export default Cart;
+export default FileContainer;
