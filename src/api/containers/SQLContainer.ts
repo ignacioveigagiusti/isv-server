@@ -1,4 +1,4 @@
-class FirebaseContainer {
+class SQLContainer {
     
     knex
     tableName
@@ -159,4 +159,4 @@ class FirebaseContainer {
     }
 }
 
-module.exports = FirebaseContainer;
+module.exports = SQLContainer;
