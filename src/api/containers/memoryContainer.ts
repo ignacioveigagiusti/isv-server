@@ -1,18 +1,15 @@
 class MemoryContainer {
     
-    fileToWork: string;
+    memoryArray:any[];
 
-    constructor(fileToWork){
-        this.fileToWork = fileToWork
+    constructor(memoryArray:any[]){
+        this.memoryArray = memoryArray
     }
     
     async save(cart) {
         try{
-            let getContent = await fs.promises.readFile(`${this.fileToWork}`, 'utf8');
-            if (getContent == '') {
-                getContent = '[]';
-            }
-            const prevContent = JSON.parse(getContent); 
+            let getContent = this.memoryArray;
+            const prevContent = getContent; 
             // Extract IDs into an array
             let indexArray: number[] = [];
             for (const i in prevContent) {
@@ -34,7 +31,7 @@ class MemoryContainer {
             let newContent = prevContent
             newContent.push(newCart);
             await newContent.sort((a,b) => (a.id > b.id) ? 1 : ((b.id > a.id) ? -1 : 0));
-            await fs.promises.writeFile(`${this.fileToWork}`, JSON.stringify(newContent,null,2));
+            this.memoryArray = newContent;
             console.log('Succesful write!');
             return newCart.id;
         }
@@ -45,11 +42,8 @@ class MemoryContainer {
 
     async editCart(cart) {
         try{
-            let getContent = await fs.promises.readFile(`${this.fileToWork}`, 'utf8');
-            if (getContent == '') {
-                getContent = '[]';
-            }
-            let prevContent = JSON.parse(getContent);
+            let getContent = this.memoryArray;
+            let prevContent = getContent;
             // Variable to check if the ID exists in the list
             let IDwasFound = 0;
             for (const i in prevContent) {
@@ -60,7 +54,7 @@ class MemoryContainer {
             }
             // Throw error if ID was not found
             if (IDwasFound == 0) throw 'ID was not found';
-            await fs.promises.writeFile(`${this.fileToWork}`, JSON.stringify(prevContent,null,2));
+            this.memoryArray = prevContent;
             console.log('Succesful write!');
             return cart;
         }
@@ -71,11 +65,8 @@ class MemoryContainer {
 
     async editProduct(productId, product) {
         try{
-            let getContent = await fs.promises.readFile(`${this.fileToWork}`, 'utf8');
-            if (getContent == '') {
-                getContent = '[]';
-            }
-            let prevContent = JSON.parse(getContent);
+            let getContent = this.memoryArray;
+            let prevContent = getContent;
             // Variable to check if the ID exists in the list
             let IDwasFound = 0;
             for (const i in prevContent) {
@@ -86,7 +77,7 @@ class MemoryContainer {
             }
             // Throw error if ID was not found
             if (IDwasFound == 0) throw 'ID was not found';
-            await fs.promises.writeFile(`${this.fileToWork}`, JSON.stringify(prevContent,null,2));
+            this.memoryArray = prevContent;
             console.log('Escritura exitosa!');
             return { id: parseInt(productId), ...product}
         }
@@ -97,8 +88,8 @@ class MemoryContainer {
 
     async getById(num) {
         try{
-            const getContent = await fs.promises.readFile(`${this.fileToWork}`, 'utf8');
-            const content = JSON.parse(getContent); 
+            const getContent = this.memoryArray;
+            const content = getContent; 
             // Variable to check if the ID exists in the list
             let IDwasFound = 0;
             for (const i in content) {
@@ -117,8 +108,8 @@ class MemoryContainer {
 
     async getAll() {
         try{
-            const getContent = await fs.promises.readFile(`${this.fileToWork}`, 'utf-8');
-            const content = JSON.parse(getContent); 
+            const getContent = this.memoryArray;
+            const content = getContent; 
             return content
         }
         catch(err){
@@ -128,8 +119,8 @@ class MemoryContainer {
 
     async deleteById(num) {
         try{
-            const getContent = await fs.promises.readFile(`${this.fileToWork}`, 'utf-8');
-            const prevContent = JSON.parse(getContent); 
+            const getContent = this.memoryArray;
+            const prevContent = getContent; 
             const newContent: any[] = [];
             // Variable to check if the ID exists in the list
             let IDwasFound = 0;
@@ -145,7 +136,7 @@ class MemoryContainer {
             }
             // Throw error if ID was not found
             if (IDwasFound == 0) throw 'ID does not exist!';
-            await fs.promises.writeFile(`${this.fileToWork}`, JSON.stringify(newContent,null,2))
+            this.memoryArray = newContent;
             console.log('Succesful write!')
         }
         catch(err){
@@ -155,7 +146,7 @@ class MemoryContainer {
 
     async deleteAll() {
         try {
-            await fs.promises.writeFile(`${this.fileToWork}`, '[]')
+            this.memoryArray = [];
             console.log('Succesful write!')
         } catch (err) {
             throw new Error(`${err}`) 

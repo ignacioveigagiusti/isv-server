@@ -1,7 +1,7 @@
 import FileContainer from '../../containers/fileContainer';
 
-class CartFileDao extends FileContainer{
+class ProductFileDao extends FileContainer{
     constructor(){
-        super('DB/fileSystem/carts.json')
+        super('DB/products.json')
     }
 }

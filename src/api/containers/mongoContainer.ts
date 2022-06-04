@@ -1,18 +1,26 @@
-class MongoContainer {
-    
-    knex
-    tableName
+import mongoose from "mongoose";
+import mongoConnection from "../options/mongoConnection";
 
-    constructor(options, tableName){
-        this.knex = require('knex')(options);
-        this.tableName = tableName;
+class MongoContainer {
+
+    model
+
+    constructor(mongoURL: string, model: string, schema){
+        try{
+            mongoConnection(mongoURL);
+        }
+        catch(err){
+            throw err
+        }
+        this.model = mongoose.model(model, schema)
     }
+
 
 
     async save(product) {
         try{
             let getContent:any[] = [];
-            await this.knex(this.tableName).select("*").then((rows) => {
+            await this.model.select("*").then((rows) => {
                 let rowsarr = rows;
                 rowsarr.map(row => getContent.push(JSON.parse(JSON.stringify(row))));
             });
@@ -35,8 +43,8 @@ class MongoContainer {
                 }
             }
             const newProduct = {id: newID, timestamp: String(new Date()).slice(0,33), ...product};
-            //KNEX
-            await this.knex(this.tableName).insert(newProduct);
+            //model
+            await this.model.insert(newProduct);
             console.log('Escritura exitosa!');
             
             return newProduct;
@@ -49,7 +57,7 @@ class MongoContainer {
     async edit(productId, product) {
         try{
             let getContent:any[] = [];
-            await this.knex(this.tableName).select("*").then((rows) => {
+            await this.model.select("*").then((rows) => {
                 let rowsarr = rows;
                 rowsarr.map(row => getContent.push(JSON.parse(JSON.stringify(row))));
             });
@@ -64,8 +72,8 @@ class MongoContainer {
             }
             // Throw error if ID was not found
             if (IDwasFound == 0) throw 'ID was not found';
-            //KNEX
-            await this.knex(this.tableName).where({id:productId}).update({...product});
+            //model
+            await this.model.where({id:productId}).update({...product});
             console.log('Escritura exitosa!');
             
             return { id: parseInt(productId), ...product}
@@ -78,7 +86,7 @@ class MongoContainer {
     async getById(num) {
         try{
             let getContent:any[] = [];
-            await this.knex(this.tableName).select("*").then((rows) => {
+            await this.model.select("*").then((rows) => {
                 let rowsarr = rows;
                 rowsarr.map(row => getContent.push(JSON.parse(JSON.stringify(row))));
             });
@@ -103,7 +111,7 @@ class MongoContainer {
     async getAll() {
         try{
             let getContent:any[] = [];
-            await this.knex(this.tableName).select("*").then((rows) => {
+            await this.model.select("*").then((rows) => {
                 let rowsarr = rows;
                 rowsarr.map(row => getContent.push(JSON.parse(JSON.stringify(row))));
             });
@@ -119,7 +127,7 @@ class MongoContainer {
     async deleteById(num) {
         try{
             let getContent:any[] = [];
-            await this.knex(this.tableName).select("*").then((rows) => {
+            await this.model.select("*").then((rows) => {
                 let rowsarr = rows;
                 rowsarr.map(row => getContent.push(JSON.parse(JSON.stringify(row))));
             });
@@ -139,7 +147,7 @@ class MongoContainer {
             }
             // Throw error if ID was not found
             if (IDwasFound == 0) throw 'ID does not exist!';
-            await this.knex(this.tableName).where('id', '=', num).del();
+            await this.model.where('id', '=', num).del();
             console.log('Escritura exitosa!');
             
         }
@@ -150,7 +158,7 @@ class MongoContainer {
 
     async deleteAll() {
         try {
-            await this.knex(this.tableName).del();
+            await this.model.del();
             console.log('Escritura exitosa!')
             
         } catch (err) {
@@ -159,4 +167,4 @@ class MongoContainer {
     }
 }
 
-module.exports = MongoContainer;
+export default MongoContainer;

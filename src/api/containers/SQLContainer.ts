@@ -8,7 +8,6 @@ class SQLContainer {
         this.tableName = tableName;
     }
 
-
     async save(product) {
         try{
             let getContent:any[] = [];
@@ -158,5 +157,4 @@ class SQLContainer {
         }
     }
 }
-
-module.exports = SQLContainer;
+export default SQLContainer;

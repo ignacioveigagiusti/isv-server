@@ -159,4 +159,4 @@ class FirebaseContainer {
     }
 }
 
-module.exports = FirebaseContainer;
+export default FirebaseContainer;
