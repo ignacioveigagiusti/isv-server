@@ -1,3 +1,4 @@
+import MongoContainer from "../../containers/mongoContainer";
 import mongoose from "mongoose";
 
 const productCollection = 'products';
@@ -14,6 +15,8 @@ const productSchema = new mongoose.Schema({
     category: {type: String, require: true, max:500}
 });
 
-const mongoProducts = mongoose.model(productCollection, productSchema);
-
-export default mongoProducts;
+class ProductMongoDao extends MongoContainer{
+    constructor(){
+        super('mongdb://localhost:27017/products',productCollection,productSchema)
+    }
+}
